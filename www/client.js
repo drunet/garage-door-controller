@@ -1,16 +1,35 @@
 var lastupdate = 0;
 
+//var querystring = window.location.querystring;
+//var myValue = querystring["User"];
+
+function getQueryVariable(variable) {
+    var query = window.location.search.substring(1);
+    var vars = query.split("&");
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split("=");
+        if (pair[0] == variable) {
+            return pair[1];
+        }
+    }
+    return "unknown!";
+}
+
+
+
+var username = getQueryVariable("User");
+
 function formatState(state, time)
-{   
+{
 	dateStr = dateFormat(new Date(parseInt(time)*1000), "mmm dS, yyyy, h:MM TT");
     return state.charAt(0).toUpperCase() + state.slice(1) + " as of " + dateStr;
 };
 
-function click(name) 
+function click(name, userid)
 {
 	$.ajax({
 		url:"clk",
-		data:{'id':name}
+		data:{'id':name, 'userid':userid}
 	})
 };
 
@@ -23,7 +42,7 @@ $.ajax({
 			var state = data[i][2];
 			var time = data[i][3];
 			var li = '<li id="' + id + '" data-icon="false">';
-			li = li + '<a href="javascript:click(\'' + id + '\');">';
+			li = li + '<a href="javascript:click(\'' + id + '\', \'' + username + '\');" onclick="return confirm(\'أكيد؟\')">';
 			li = li + '<img src="img/'+state + '.png" />';
 			li = li + '<h3>' + name + '</h3>';
 			li = li + '<p>' + formatState(state, time) + '</p>';
@@ -35,7 +54,7 @@ $.ajax({
 });
 
 function poll(){
-	$.ajax({ 
+	$.ajax({
     	url: "upd",
     	data: {'lastupdate': lastupdate },
     	success: function(response, status) {
@@ -57,10 +76,9 @@ function poll(){
             setTimeout('poll();', 10000);
         },
     	//complete: poll,
-    	dataType: "json", 
+    	dataType: "json",
     	timeout: 30000
     	});
 };
 
 $(document).live('pageinit', poll);
-   

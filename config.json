@@ -20,7 +20,8 @@
 		},
 	"pushbullet":
 		{
-		"access_token":"<PUSHBULLET ACCESS TOKEN>"
+		"access_token":"<PUSHBULLET ACCESS TOKEN>",
+		"channel_tag" : "<channel_tag>"
 		}
 },
 "openhab" :

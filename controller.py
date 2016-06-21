@@ -14,6 +14,9 @@ from zope.interface import implements
 from twisted.cred import checkers, portal
 from twisted.web.guard import HTTPAuthSessionWrapper, DigestCredentialFactory, BasicCredentialFactory
 
+
+userlist = {'user1':1, 'user2':1,  'user3':1}
+
 class HttpPasswordRealm(object):
     implements(portal.IRealm)
 
@@ -118,20 +121,20 @@ class Controller():
                     self.update_openhab(door.openhab_name, new_state)
             if new_state == 'open' and not door.msg_sent and time.time() - door.open_time >= self.ttw:
                 if self.use_alerts:
-                    title = "%s's garage door open" % door.name
-                    message = "%s's garage door has been open for %s" % (door.name,
+                    title = "%s's open" % door.name
+                    message = "%s's has been open for %s" % (door.name,
                                                                      elapsed_time(int(time.time() - door.open_time)))
                     if self.alert_type == 'smtp':
                         self.send_email(title, message)
-                    elif self.alert_type == 'pushbullet':
-                        self.send_pushbullet(door, title, message)
+                   elif self.alert_type == 'pushbullet':
+                       self.send_pushbullet(door, title, message)
                     door.msg_sent = True
 
             if new_state == 'closed':
                 if self.use_alerts:
                     if door.msg_sent == True:
-                        title = "%s's garage doors closed" % door.name
-                        message = "%s's garage door is now closed after %s "% (door.name,
+                        title = "%s's closed" % door.name
+                        message = "%s's is now closed after %s "% (door.name,
                                                                                elapsed_time(int(time.time() - door.open_time)))
                         if self.alert_type == 'smtp':
                             self.send_email(title, message)
@@ -165,6 +168,8 @@ class Controller():
         conn = httplib.HTTPSConnection("api.pushbullet.com:443")
         conn.request("POST", "/v2/pushes",
              json.dumps({
+                 "dismissed": "true",
+                 "channel_tag": config['channel_tag'],
                  "type": "note",
                  "title": title,
                  "body": message,
@@ -179,11 +184,13 @@ class Controller():
         conn.getresponse()
 
 
-    def toggle(self, doorId):
+    def toggle(self, doorId, userId):
         for d in self.doors:
-            if d.id == doorId:
+            if d.id == doorId and userlist.has_key(userId):
                 syslog.syslog('%s: toggled' % d.name)
                 d.toggle_relay()
+                m = "%s's clicked" % d.name
+                self.send_pushbullet(d, m, userId)
                 return
 
     def get_updates(self, lastupdate):
@@ -223,7 +230,8 @@ class ClickHandler(Resource):
 
     def render(self, request):
         door = request.args['id'][0]
-        self.controller.toggle(door)
+        userid = request.args['userid'][0]
+        self.controller.toggle(door, userid)
         return 'OK'
 
 class ConfigHandler(Resource):
