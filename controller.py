@@ -126,7 +126,7 @@ class Controller():
                                                                      elapsed_time(int(time.time() - door.open_time)))
                     if self.alert_type == 'smtp':
                         self.send_email(title, message)
-                   elif self.alert_type == 'pushbullet':
+                    elif self.alert_type == 'pushbullet':
                        self.send_pushbullet(door, title, message)
                     door.msg_sent = True
 
@@ -174,7 +174,7 @@ class Controller():
                  "title": title,
                  "body": message,
              }), {'Authorization': 'Bearer ' + config['access_token'], 'Content-Type': 'application/json'})
-        door.pb_iden = json.loads(conn.getresponse().read())['iden']
+#        door.pb_iden = json.loads(conn.getresponse().read())['iden']
 
     def update_openhab(self, item, state):
         syslog.syslog("Updating openhab")
